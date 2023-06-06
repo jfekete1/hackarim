@@ -39,19 +39,30 @@ status, email_data = imap.fetch(latest_email_id, '(RFC822)')
 raw_email = email_data[0][1]
 email_message = email.message_from_bytes(raw_email)
 
-# Print the email subject
+# Get the email subject
 subject = email_message['Subject']
 print('Subject:', subject)
 
-# Print the email body
+# Get the email body
 if email_message.is_multipart():
     for part in email_message.walk():
         if part.get_content_type() == 'text/plain':
             body = part.get_payload(decode=True).decode('utf-8')
+            body = '\n'.join(line for line in body.split('\n') if not line.startswith('>'))
+            body = body.replace('\n', ' ').replace('\r', '')
             print('Body:', body)
 else:
     body = email_message.get_payload(decode=True).decode('utf-8')
+    body = '\n'.join(line for line in body.split('\n') if not line.startswith('>'))
+    body = body.replace('\n', ' ').replace('\r', '')
     print('Body:', body)
+
+# Create a notification.py file with email values
+notification_script = f"notes = wasp.system.notifications\nmsg = {{'title': '{subject}', 'body': '{body}'}}\nnotes.__setitem__(1, msg)\nwatch.vibrator.pulse(1)\n"
+
+# Write the content to the notification.py file
+with open('notification.py', 'w') as file:
+    file.write(notification_script)
 
 # Close the mailbox connection
 imap.close()
