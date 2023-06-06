@@ -1,6 +1,7 @@
 import imaplib
 import email
 import argparse
+import hashlib
 
 # IMAP server and login credentials
 imap_server = 'mail.dmz.zalaszam.hu'
@@ -39,9 +40,36 @@ status, email_data = imap.fetch(latest_email_id, '(RFC822)')
 raw_email = email_data[0][1]
 email_message = email.message_from_bytes(raw_email)
 
+# Read processed checksums from processed.txt
+processed_emails = set()
+try:
+    with open('processed.txt', 'r') as file:
+        for line in file:
+            processed_emails.add(line.strip())
+except FileNotFoundError:
+    pass
+
+# Generate checksum for the email
+checksum = hashlib.md5(email_message.as_bytes()).hexdigest()
+
+# Check if the email has already been processed
+if checksum in processed_emails:
+    print("Nothing to see here")
+    exit()
+
+# Add the checksum to the processed_emails set
+processed_emails.add(checksum)
+
+# Write processed checksums to processed.txt
+with open('processed.txt', 'w') as file:
+    for checksum in processed_emails:
+        file.write(checksum + '\n')
+
+# Continue processing the email
 # Get the email subject
-subject = email_message['Subject']
+subject = email_message['Subject'][:14]  # Retrieve only the first 14 characters
 print('Subject:', subject)
+
 
 # Get the email body
 if email_message.is_multipart():
