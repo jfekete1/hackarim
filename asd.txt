@@ -1,0 +1,147 @@
+tools/wasptool --device D3:7D:50:55:E4:90 --console
+notes = wasp.system.notifications
+msg= {'title': 'dasdas', 'body': 'huhuhu'}
+msg= {'title': 'cron Notification', 'body': 'The archiving process ran successfully!'}
+notes.__setitem__(1, msg)
+watch.vibrator.pulse(1)
+
+#notes.__getitem__(1)
+
+
+watch.  (TAB)
+__class__       __name__        __file__        I2C
+Pin             RTCounter       SPI             Signal
+gc              i2c             schedule        time
+nop             _callback       RTC             rtc
+os              draw565         Battery         BMA421
+CST816S         HRS3300         ST7789_SPI      Vibrator
+FLASH           connected       Backlight       backlight
+spi             display         drawable        boot_msg
+safe_mode       button          battery         accel
+hrs             touch           vibrator        flash
+free
+
+
+
+
+def handle_rtc(c):
+    # Wait for the clock to tick over to the next second
+    now = then = time.localtime()
+    while now[5] == then[5]:
+        now = time.localtime()
+
+    # Set the time
+    c.sendline(f'watch.rtc.set_localtime(({now[0]}, {now[1]}, {now[2]}, {now[3]}, {now[4]}, {now[5]}, {now[6]}, {now[7]}))')
+    c.expect('>>> ')
+    
+    
+
+
+BLE sniffing:
+Androidos telón Beállítások -> fejlesztői opciók -> USB debug engedély, és HCI logolás engedély
+kapcsold be a bluetooth-ot
+küldj csomagokat
+kapcsold ki a bluetoothot
+csatlakoztasd a telót USB-n a RoG laptophoz
+cd
+adb bugreport bug
+a bug.zip-et nézd meg egy kitömörítő eszközzel és keresd meg benne a bluetooth részt
+pl FS/data/misc/bluetooth/logs/ vagy FS/data/log/bt
+
+
+
+
+Here are some additional information:
+Service UUID: 6e400001b5a3f393e0a9e50e24dcca9e
+write command 0x52
+handle 0x0013
+
+here is an example notification json, where the ID is the current time in unix timestamp:
+GB({"t":"notify","id":1685779206,"body":"hali","sender":" n","tel":"+36703089524"})
+
+Using wireshark I see, that this one notification takes 11 bluetooth write commands.
+
+Service UUID: 6e400001b5a3f393e0a9e50e24dcca9e
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 104742287b227422   ->  GB({"t"
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 3a226e6f74696679   ->  :"notify
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 222c226964223a31   ->  ","id":1
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 3638353737393230   ->  68577920
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 362c22626f647922   ->  6,"body"
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 3a2268616c69222c   ->  :"hali",
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 2273656e64657222   ->  "sender"
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 3a22c96e222c2274   ->  :" n","t
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 656c223a222b3336   ->  el":"+36
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 3730333038393532   ->  70308952
+
+write command 0x52
+handle 0x0013 (Nordic UART Service: Nordic UART Tx)
+value 33227d290a         ->  3"}) 
+
+
+How to use gatttool to send a similar notification to my watch?
+
+
+
+
+
+gatttool -b D3:7D:50:55:E4:90 -I
+char-desc
+
+char-write-cmd 0x0013 104742287b227422
+char-write-cmd 0x0013 3a226e6f74696679
+char-write-cmd 0x0013 222c226964223a31
+char-write-cmd 0x0013 3638353737393230
+char-write-cmd 0x0013 362c22626f647922
+char-write-cmd 0x0013 3a2268616c69222c
+char-write-cmd 0x0013 2273656e64657222
+char-write-cmd 0x0013 3a22c96e222c2274
+char-write-cmd 0x0013 656c223a222b3336
+char-write-cmd 0x0013 3730333038393532
+char-write-cmd 0x0013 33227d290a
+ 
+ 
+
+
+bluetoothctl
+scan on
+scan off
+connect D3:7D:50:55:E4:90
+menu gatt
+select-attribute 6e400002-b5a3-f393-e0a9-e50e24dcca9e
+notify on
+write 10 47 42 28 7b 22 74 22 3a 22 6e 6f 74 69 66 79 22 2c 22 69 64 22 3a 31 36 38 35 37 37 39 32 30 36 2c 22 62 6f 64 79 22 3a 22 68 61 6c 69 22 2c 22 73 65 6e 64 65 72 22 3a 22 c9 6e 22 2c 22 74 65 6c 22 3a 22 2b 33 36 37 30 33 30 38 39 35 32 33 22 7d 29 0a
+
+write 104742287b2274223a226e6f74696679222c226964223a313638353737393230362c22626f6479223a2268616c69222c2273656e646572223a22c96e222c2274656c223a222b3336373033303839353233227d290a
+
+write 4742287b227422
+
+
