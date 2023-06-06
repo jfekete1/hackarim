@@ -1,3 +1,6 @@
+#tools/wasptool --verbose --device D3:7D:50:55:E4:90 --exec /home/mobian/test_notification.py 
+tools/wasptool --device D3:7D:50:55:E4:90 --exec /home/mobian/test_notification.py
+
 tools/wasptool --device D3:7D:50:55:E4:90 --console
 notes = wasp.system.notifications
 msg= {'title': 'dasdas', 'body': 'huhuhu'}
