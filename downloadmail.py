@@ -2,6 +2,7 @@ import imaplib
 import email
 import argparse
 import hashlib
+import subprocess
 
 # IMAP server and login credentials
 imap_server = 'mail.dmz.zalaszam.hu'
@@ -43,7 +44,7 @@ email_message = email.message_from_bytes(raw_email)
 # Read processed checksums from processed.txt
 processed_emails = set()
 try:
-    with open('processed.txt', 'r') as file:
+    with open('/home/mobian/hackarim/processed.txt', 'r') as file:
         for line in file:
             processed_emails.add(line.strip())
 except FileNotFoundError:
@@ -61,7 +62,7 @@ if checksum in processed_emails:
 processed_emails.add(checksum)
 
 # Write processed checksums to processed.txt
-with open('processed.txt', 'w') as file:
+with open('/home/mobian/hackarim/processed.txt', 'w') as file:
     for checksum in processed_emails:
         file.write(checksum + '\n')
 
@@ -89,10 +90,20 @@ else:
 notification_script = f"notes = wasp.system.notifications\nmsg = {{'title': '{subject}', 'body': '{body}'}}\nnotes.__setitem__(1, msg)\nwatch.vibrator.pulse(1)\n"
 
 # Write the content to the notification.py file
-with open('notification.py', 'w') as file:
+with open('/home/mobian/hackarim/notification.py', 'w') as file:
     file.write(notification_script)
 
 # Close the mailbox connection
 imap.close()
 imap.logout()
 
+command = "/home/mobian/wasp-os/tools/wasptool --device D3:7D:50:55:E4:90 --exec /home/mobian/hackarim/notification.py"
+
+process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdout, stderr = process.communicate()
+
+if process.returncode == 0:
+    print("Notification sent successfully!")
+else:
+    print("Command failed with error code:", process.returncode)
+    print("Error message:", stderr.decode("utf-8"))
